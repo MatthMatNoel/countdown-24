@@ -35,6 +35,7 @@ export function createEngine() {
             renderer.ctx.reset()
 
             updateFunction(dt)
+            input.update()
         })
     }
 

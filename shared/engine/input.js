@@ -4,6 +4,7 @@ export function createInput(pixelRatio) {
 
     let inputX = 0
     let inputY = 0
+    let wasPressed = false;
     let isPressed = false;
     let inputStarted = false;
     const options = {
@@ -30,10 +31,18 @@ export function createInput(pixelRatio) {
         inputStarted = true
     }, options)
 
+    function update() {
+
+        wasPressed = isPressed;
+    }
+
     return {
+        update,
         getX: () => inputX * pixelRatio,
         getY: () => inputY * pixelRatio,
         isPressed: () => isPressed,
+        isDown: () => isPressed && !wasPressed,
+        isUp: () => !isPressed && wasPressed,
         hasStarted: () => inputStarted
     }
 }
