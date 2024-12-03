@@ -1,23 +1,33 @@
 import { createEngine } from "../../shared/engine.js";
-import { Spring } from "../../shared/spring.js";
+import { createAudio } from "../../shared/engine/audio.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
 run(update);
 
-const spring = new Spring({
-  position: 0,
-  frequency: 2.5,
-  halfLife: 0.05,
+// initialize audio
+const audio = createAudio();
+let spraySound;
+let spraySFX = true;
+let cleaningSound;
+let cleaningSFX = false;
+
+audio.load({ src: "./assets/SFX/spray.mp3", loop: false }).then((sound) => {
+  spraySound = sound;
 });
 
+audio.load({ src: "./assets/SFX/cleaning.mp3", loop: false }).then((sound) => {
+  cleaningSound = sound;
+});
+
+// Create an array to store the circles
 const circles = [];
 let drawBlackCircles = false;
 let wasMostlyRed = false;
 
 // Load the SVG image
 const svgImage = new Image();
-svgImage.src = "./public/SVG/3_A.svg";
+svgImage.src = "./assets/SVG/3_A.svg";
 let svgLoaded = false;
 svgImage.onload = () => {
   console.log("SVG image loaded");
@@ -35,7 +45,7 @@ offscreenCanvas.height = canvas.height;
 // Load the spray PNG
 const sprayImage = new Image();
 let sprayOffCursor = true;
-sprayImage.src = "./public/PNG/spray.png";
+sprayImage.src = "./assets/PNG/spray.png";
 let sprayLoaded = false;
 sprayImage.onload = () => {
   console.log("Spray image loaded");
@@ -45,7 +55,7 @@ sprayImage.onload = () => {
 // Load the spray on PNG
 const sprayOnImage = new Image();
 let sprayOnCursor = false;
-sprayOnImage.src = "./public/PNG/spray_on.png";
+sprayOnImage.src = "./assets/PNG/spray_on.png";
 let sprayOnLoaded = false;
 sprayOnImage.onload = () => {
   console.log("Spray on image loaded");
@@ -55,7 +65,7 @@ sprayOnImage.onload = () => {
 // Load the cloth PNG
 const clothImage = new Image();
 let clothCursor = false;
-clothImage.src = "./public/PNG/cloth.png";
+clothImage.src = "./assets/PNG/cloth.png";
 let clothLoaded = false;
 clothImage.onload = () => {
   console.log("Cloth image loaded");
@@ -64,6 +74,13 @@ clothImage.onload = () => {
 
 function update(dt) {
   if (input.isPressed()) {
+    // Play the spray sound
+    if (spraySound && !spraySound.isPlaying() && spraySFX) {
+      spraySound.play();
+    } else if (cleaningSound && !cleaningSound.isPlaying() && cleaningSFX) {
+      cleaningSound.play();
+    }
+
     // Draw a circle at the mouse position
     const x = drawBlackCircles ? input.getX() : input.getX() + 200;
     const y = input.getY();
@@ -190,11 +207,14 @@ function update(dt) {
 
     if (redPercentage > 60) {
       console.log("Most of the SVG is colored red.");
+
       setTimeout(() => {
         drawBlackCircles = true;
         wasMostlyRed = true;
         clothCursor = true;
         sprayOffCursor = false;
+        spraySFX = false;
+        cleaningSFX = true;
       }, 1000);
     } else {
       // console.log("Most of the SVG is not colored red.");
