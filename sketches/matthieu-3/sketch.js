@@ -3,7 +3,6 @@ import { createAudio } from "../../shared/engine/audio.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
-run(update);
 
 // initialize audio
 const audio = createAudio();
@@ -12,12 +11,24 @@ let spraySFX = true;
 let cleaningSound;
 let cleaningSFX = false;
 
-audio.load({ src: "./assets/SFX/spray.mp3", loop: false }).then((sound) => {
-  spraySound = sound;
+const spraySoundFile = await audio.load({
+  src: "./assets/SFX/spray_02.mp3",
+  loop: true,
+});
+spraySound = spraySoundFile.play({
+  volume: 0,
 });
 
-audio.load({ src: "./assets/SFX/cleaning.mp3", loop: false }).then((sound) => {
-  cleaningSound = sound;
+//.then((sound) => {
+//spraySound = sound;
+//});
+
+const cleanSoundFile = await audio.load({
+  src: "./assets/SFX/cleaning.mp3",
+  loop: true,
+});
+cleaningSound = cleanSoundFile.play({
+  volume: 0,
 });
 
 // Create an array to store the circles
@@ -72,15 +83,12 @@ clothImage.onload = () => {
   clothLoaded = true;
 };
 
+let prevMouseX = 0;
+let prevMouseY = 0;
+let currentSoundRate = 0;
+
 function update(dt) {
   if (input.isPressed()) {
-    // Play the spray sound
-    if (spraySound && !spraySound.isPlaying() && spraySFX) {
-      spraySound.play();
-    } else if (cleaningSound && !cleaningSound.isPlaying() && cleaningSFX) {
-      cleaningSound.play();
-    }
-
     // Draw a circle at the mouse position
     const x = drawBlackCircles ? input.getX() : input.getX() + 200;
     const y = input.getY();
@@ -90,6 +98,26 @@ function update(dt) {
     circles.push({ x, y, color, scale, NoiseData });
     sprayOnCursor = true;
     sprayOffCursor = false;
+  }
+
+  const mouseSpeedX = (input.getX() - prevMouseX) / dt;
+  const mouseSpeedY = (input.getY() - prevMouseY) / dt;
+
+  if (input.isPressed() && spraySFX) {
+    spraySound.setVolume(1);
+  } else {
+    spraySound.setVolume(0);
+  }
+  if (input.isPressed() && cleaningSFX) {
+    cleaningSound.setVolume(1);
+    const mouseSpeed = math.len(mouseSpeedX, mouseSpeedY);
+    console.log(mouseSpeed);
+    const targetRate = math.mapClamped(mouseSpeed, 0, 600, 0.5, 3);
+    currentSoundRate = math.lerp(currentSoundRate, targetRate, 10 * dt);
+    cleaningSound.setRate(currentSoundRate);
+  } else {
+    cleaningSound.setVolume(0);
+    cleaningSound.setRate(0);
   }
 
   ctx.fillStyle = "black";
@@ -225,6 +253,9 @@ function update(dt) {
       finish();
     }
   }
+
+  prevMouseX = input.getX();
+  prevMouseY = input.getY();
 }
 
 function generateNoiseData(radius) {
@@ -251,3 +282,5 @@ function drawNoisyCircle(ctx, x, y, NoiseData) {
     ctx.lineTo(px, py);
   });
 }
+
+run(update);

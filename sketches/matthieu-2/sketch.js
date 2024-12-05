@@ -210,7 +210,3 @@ function getNeighbors(row, col) {
   if (col < matrixWidth - 1) neighbors.push([row, col + 1]); // right
   return neighbors;
 }
-
-function cubicOut(t) {
-  return --t * t * t + 1;
-}

@@ -29,6 +29,12 @@ let hammerSwingSpeed = 0.1;
 let hammerSwinging = false;
 let hammerSwingComplete = true;
 let isHammerPlaced = false;
+let isCrackComplete = false;
+
+let isShaking = false;
+let shakeDuration = 200; // Duration of the shake in milliseconds
+let shakeStartTime = 0;
+let shakeIntensity = 25; // Intensity of the shake
 
 // Load cursor images
 let cursor = {
@@ -37,6 +43,12 @@ let cursor = {
   chiselImage2: loadImage("./assets/PNG/chisel_2.png"),
   chiselImage3: loadImage("./assets/PNG/chisel_3.png"),
   hammerImage: loadImage("./assets/PNG/hammer.png"),
+};
+
+let crackImages = {
+  crack01: loadImage("./assets/SVG/1_A_Crack_01.svg"),
+  crack02: loadImage("./assets/SVG/1_A_Crack_02.svg"),
+  crack03: loadImage("./assets/SVG/1_A_Crack_03.svg"),
 };
 
 let currentChiselImage = null;
@@ -93,12 +105,28 @@ function parseSVGPoints(points) {
 
 // Main update function
 function update(dt) {
+  if (isShaking) {
+    const elapsedTime = Date.now() - shakeStartTime;
+    if (elapsedTime < shakeDuration) {
+      const shakeX = (Math.random() - 0.5) * shakeIntensity;
+      const shakeY = (Math.random() - 0.5) * shakeIntensity;
+      ctx.save();
+      ctx.translate(shakeX, shakeY);
+    } else {
+      isShaking = false;
+    }
+  }
+
   drawBackground();
   if (svgPolygon) drawSVGPolygon();
   if (input.isPressed() && !pointPlaced) storePoint();
   drawPoints();
   drawCursor();
   updateHammerRotation();
+
+  if (isShaking) {
+    ctx.restore();
+  }
 }
 
 // Draw the background
@@ -113,7 +141,11 @@ function drawBackground() {
 // Draw the SVG polygon
 function drawSVGPolygon() {
   ctx.save();
-  ctx.fillStyle = "black";
+  if (isCrackComplete) {
+    ctx.fillStyle = "white";
+  } else {
+    ctx.fillStyle = "black";
+  }
   const boundingBox = getSVGBoundingBox();
   translateX = (canvas.width - boundingBox.width) / 2 - boundingBox.x;
   translateY = (canvas.height - boundingBox.height) / 2 - boundingBox.y;
@@ -141,6 +173,7 @@ function getSVGBoundingBox() {
 
 // Draw strokes on the SVG polygon
 function drawPolygonStrokes() {
+  isCrackComplete = true;
   svgPoints.forEach((point, index) => {
     const nextPoint = svgPoints[(index + 1) % svgPoints.length];
     const dist = math.dist(closestPoint.x, closestPoint.y, point.x, point.y);
@@ -150,9 +183,19 @@ function drawPolygonStrokes() {
       newPath.lineTo(nextPoint.x, nextPoint.y);
       ctx.strokeStyle = "white";
       ctx.lineWidth = Math.min(segmentWidths[index], maxStrokeWidth);
+      if (ctx.lineWidth < 3) {
+        isCrackComplete = false;
+      }
       ctx.stroke(newPath);
     }
   });
+
+  if (isCrackComplete) {
+    console.log("Crack complete");
+    setTimeout(() => {
+      finish();
+    }, 1000);
+  }
 }
 
 // Store the point where the user clicked
@@ -206,7 +249,7 @@ function updateChiselImage() {
 
 // Draw the cursor on the canvas
 function drawCursor() {
-  if (cursor.chiselImage0.complete) {
+  if (cursor.chiselImage0.complete || input.hasStarted) {
     const cursorX = input.getX();
     const cursorY = input.getY();
     ctx.save();
@@ -231,6 +274,8 @@ function updateHammerRotation() {
     if (hammerRotation < -Math.PI / 4) {
       hammerSwinging = false;
       hammerSwingComplete = true;
+      isShaking = true;
+      shakeStartTime = Date.now();
       if (isChiselPlaced && crackValue > 1) {
         strokeWidth += 5;
         threshold += 150;
