@@ -69,7 +69,7 @@ function loadImage(src, onLoad) {
 
 // Main update function
 function update(dt) {
-  if (input.isPressed()) {
+  if (input.isPressed() && !isLineComplete) {
     spring.target = 1.5;
   } else if (pageLoaded && input.hasStarted()) {
     spring.target = 1;
@@ -122,7 +122,7 @@ function updateSVGLineWidth() {
 
 // Function to handle user input
 function handleInput() {
-  if (input.isPressed()) {
+  if (input.isPressed() && !isLineComplete) {
     createFirework(input.getX(), input.getY());
   }
 }
