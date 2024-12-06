@@ -121,7 +121,10 @@ function update(dt) {
   const mouseSpeedY = (input.getY() - prevMouseY) / dt;
 
   if (input.isPressed() && spraySFX) {
-    spraySound.setVolume(1);
+    const mouseSpeed = math.len(mouseSpeedX, mouseSpeedY);
+    const targetRate = math.mapClamped(mouseSpeed, 0, 1200, 0.5, 1.5);
+    currentSoundRate = math.lerp(currentSoundRate, targetRate, 10 * dt);
+    spraySound.setVolume(currentSoundRate);
   } else {
     spraySound.setVolume(0);
   }
