@@ -27,7 +27,7 @@ let cleaningSound;
 let cleaningSFX = false;
 
 const spraySoundFile = await audio.load({
-  src: "./assets/SFX/spray_02.mp3",
+  src: "./assets/SFX/spray.mp3",
   loop: true,
 });
 spraySound = spraySoundFile.play({
