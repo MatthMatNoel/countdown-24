@@ -79,6 +79,7 @@ function handleClick() {
     hammerSwingComplete = false;
   } else {
     isHammerPlaced = true;
+    smallHitSound.play();
   }
 }
 
@@ -278,7 +279,7 @@ function updateChiselImage() {
 
 // Draw the cursor on the canvas
 function drawCursor() {
-  if (cursor.chiselImage0.complete && input.hasStarted) {
+  if (input.hasStarted() && cursor.chiselImage0.complete) {
     const cursorX = input.getX();
     const cursorY = input.getY();
     ctx.save();
@@ -334,5 +335,6 @@ function updateHammerRotation() {
 
 // initialize audio
 
+const smallHitSound = await audio.load("assets/SFX/smallHit.mp3");
 const hitSound = await audio.load("assets/SFX/hit.mp3");
 const rockSound = await audio.load("assets/SFX/rock.mp3");

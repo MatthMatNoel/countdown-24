@@ -67,21 +67,13 @@ function loadImage(src, onLoad) {
   return img;
 }
 
-// Set spring target to 1 when the page is fully loaded
-window.onload = () => {
-  if (pageLoaded) {
-    spring.target = 1;
-  }
-};
-
 // Main update function
 function update(dt) {
   if (input.isPressed()) {
     spring.target = 1.5;
-  } else if (pageLoaded) {
+  } else if (pageLoaded && input.hasStarted()) {
     spring.target = 1;
   }
-
   spring.step(dt);
 
   clearCanvas();
