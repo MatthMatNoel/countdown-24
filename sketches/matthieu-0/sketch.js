@@ -2,8 +2,15 @@ import { createEngine } from "../../shared/engine.js";
 import { Spring } from "../../shared/spring.js";
 
 // Initialize the engine
-const { renderer, input, math, run, finish } = createEngine();
+const { renderer, input, math, run, finish, audio } = createEngine();
 const { ctx, canvas } = renderer;
+
+const explosionSound = await audio.load("assets/SFX/explosion.mp3");
+const fireworkSound = await audio.load("assets/SFX/firework.mp3");
+const victorySound = await audio.load("assets/SFX/victory.mp3");
+
+let isVictory = false;
+
 run(update);
 
 const spring = new Spring({
@@ -97,6 +104,10 @@ function updateSVGLineWidth() {
   if (svgLineWidth > 20) {
     svgLineWidth -= 1;
     isLineComplete = true;
+    if (!isVictory) {
+      victorySound.play();
+    }
+    isVictory = true;
   } else if (svgLineWidth > 10) {
     svgLineWidth -= 0.5;
   } else if (svgLineWidth > 0) {
@@ -167,6 +178,10 @@ function createFirework(x, y) {
     life: Math.floor(Math.random() * 101) + 50,
     size: Math.random() * 0.1 + 0.1,
   });
+  fireworkSound.play({
+    rate: 1 + Math.random() * 1,
+    volume: 0.1 + Math.random() * 0.5,
+  });
 }
 
 // Function to update fireworks
@@ -186,6 +201,10 @@ function updateFireworks() {
       createParticles(firework.x, firework.y);
       fireworks.splice(i, 1);
       svgLineWidth += 1;
+      explosionSound.play({
+        rate: 1 + Math.random() * 1,
+        volume: 0.1 + Math.random() * 2,
+      });
     }
   }
 }

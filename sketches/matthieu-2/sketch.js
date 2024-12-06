@@ -1,8 +1,28 @@
 import { createEngine } from "../../shared/engine.js";
+import { createAudio } from "../../shared/engine/audio.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
-run(update);
+
+// initialize audio
+const audio = createAudio();
+
+const lighterSoundFile = await audio.load({
+  src: "./assets/SFX/lighter.mp3",
+  loop: false,
+});
+const lighterSound = lighterSoundFile.play({
+  volume: 0,
+});
+let lighterSoundPlayed = false;
+
+const fireSoundFile = await audio.load({
+  src: "./assets/SFX/fire.mp3",
+  loop: true,
+});
+const fireSound = fireSoundFile.play({
+  volume: 0,
+});
 
 let cursor = {
   isOn: false,
@@ -67,8 +87,16 @@ const pixelMatrix = Array.from({ length: matrixHeight }, () =>
 function update(dt) {
   if (input.isPressed()) {
     cursor.isOn = true;
+    if (!lighterSoundPlayed) {
+      lighterSoundFile.play({
+        rate: 1 + Math.random() * 1,
+        volume: 0.5 + Math.random() * 0.5,
+      });
+      lighterSoundPlayed = true;
+    }
   } else {
     cursor.isOn = false;
+    lighterSoundPlayed = false;
   }
 
   // Draw the background
@@ -130,6 +158,7 @@ function update(dt) {
       pixelMatrix[row][col].color = pixels.burning; // Change the color to burning
       pixelMatrix[row][col].burnCounter = pixels.life; // Set the burn counter
     }
+    fireSound.setVolume(1);
   }
 
   // Spread the red color to neighboring pixels
@@ -140,6 +169,8 @@ function update(dt) {
 
   // Check if there are no burning pixels left and if there has been some burning pixel before
   if (pixels.hasEverBurned && !hasBurningPixels()) {
+    fireSound.setVolume(0);
+
     setTimeout(() => {
       coverY += coverSpeed; // Move the rectangle
 
@@ -210,3 +241,5 @@ function getNeighbors(row, col) {
   if (col < matrixWidth - 1) neighbors.push([row, col + 1]); // right
   return neighbors;
 }
+
+run(update);

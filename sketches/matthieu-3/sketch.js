@@ -1,8 +1,23 @@
 import { createEngine } from "../../shared/engine.js";
 import { createAudio } from "../../shared/engine/audio.js";
+import { Spring } from "../../shared/spring.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
+
+// Initialize the spring
+const spring = new Spring({
+  position: 0, // start position
+  frequency: 2.5, // oscillations per second (approximate)
+  halfLife: 0.35, // time until amplitude is halved
+  target: 0,
+});
+
+// Set spring target to 1 when the page is fully loaded
+window.onload = () => {
+  if (input.hasStarted()) {
+  }
+};
 
 // initialize audio
 const audio = createAudio();
@@ -88,6 +103,8 @@ let prevMouseY = 0;
 let currentSoundRate = 0;
 
 function update(dt) {
+  spring.step(dt);
+
   if (input.isPressed()) {
     // Draw a circle at the mouse position
     const x = drawBlackCircles ? input.getX() : input.getX() + 200;
@@ -149,7 +166,9 @@ function update(dt) {
     ctx.restore(); // Restore the context state
 
     if (input.hasStarted() && sprayLoaded && clothLoaded) {
-      const cursorScale = 0.5;
+      spring.target = 1;
+
+      const cursorScale = 0.5 * spring.position;
       const cursorX = input.getX();
       const cursorY = input.getY();
       ctx.save();
@@ -250,7 +269,10 @@ function update(dt) {
 
     if (wasMostlyRed && blackPercentage > 99.9) {
       console.log("All of the SVG is black.");
-      finish();
+      spring.target = 0;
+      if (spring.position < 0.1) {
+        finish();
+      }
     }
   }
 

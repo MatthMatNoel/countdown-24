@@ -1,8 +1,18 @@
 import { createEngine } from "../../shared/engine.js";
+import { createAudio } from "../../shared/engine/audio.js";
+import { Spring } from "../../shared/spring.js";
 
 const { renderer, input, math, run, finish } = createEngine();
 const { ctx, canvas } = renderer;
+
 run(update);
+
+const spring = new Spring({
+  position: 0, // start position
+  frequency: 2.5, // oscillations per second (approximate)
+  halfLife: 0.35, // time until amplitude is halved
+  target: 0,
+});
 
 // Initial state variables
 let backgroundColor = false;
@@ -103,6 +113,11 @@ function parseSVGPoints(points) {
     .filter((point) => point !== null);
 }
 
+// Set spring target to 1 when the page is fully loaded
+window.onload = () => {
+  spring.target = 1;
+};
+
 // Main update function
 function update(dt) {
   if (isShaking) {
@@ -116,6 +131,13 @@ function update(dt) {
       isShaking = false;
     }
   }
+
+  if (isHammerPlaced) {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(spring.position, spring.position);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  }
+  spring.step(dt);
 
   drawBackground();
   if (svgPolygon) drawSVGPolygon();
@@ -149,7 +171,9 @@ function drawSVGPolygon() {
   const boundingBox = getSVGBoundingBox();
   translateX = (canvas.width - boundingBox.width) / 2 - boundingBox.x;
   translateY = (canvas.height - boundingBox.height) / 2 - boundingBox.y;
+
   ctx.translate(translateX, translateY);
+
   const path2D = new Path2D(`M${svgPolygon}Z`);
   ctx.fill(path2D);
   if (isChiselPlaced && closestPoint) drawPolygonStrokes();
@@ -193,8 +217,12 @@ function drawPolygonStrokes() {
   if (isCrackComplete) {
     console.log("Crack complete");
     setTimeout(() => {
-      finish();
-    }, 1000);
+      spring.target = 0;
+
+      if (spring.position <= -0.05) {
+        finish();
+      }
+    }, 500);
   }
 }
 
@@ -249,11 +277,12 @@ function updateChiselImage() {
 
 // Draw the cursor on the canvas
 function drawCursor() {
-  if (cursor.chiselImage0.complete || input.hasStarted) {
+  if (cursor.chiselImage0.complete && input.hasStarted) {
     const cursorX = input.getX();
     const cursorY = input.getY();
     ctx.save();
     ctx.translate(cursorX, cursorY);
+    ctx.scale(spring.position, spring.position);
     ctx.rotate(hammerRotation);
     ctx.drawImage(
       isHammerPlaced ? cursor.hammerImage : cursor.chiselImage0,
@@ -275,6 +304,10 @@ function updateHammerRotation() {
       hammerSwinging = false;
       hammerSwingComplete = true;
       isShaking = true;
+      hitSoundFile.play({
+        rate: 0.75 + Math.random() * 1,
+        volume: 0.5 + Math.random() * 0.5,
+      });
       shakeStartTime = Date.now();
       if (isChiselPlaced && crackValue > 1) {
         strokeWidth += 5;
@@ -297,3 +330,14 @@ function updateHammerRotation() {
     }
   }
 }
+
+// initialize audio
+const audio = createAudio();
+
+const hitSoundFile = await audio.load({
+  src: "./assets/SFX/hit.mp3",
+  loop: false,
+});
+const hitSound = hitSoundFile.play({
+  volume: 0,
+});
