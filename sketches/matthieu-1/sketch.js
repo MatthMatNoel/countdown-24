@@ -2,7 +2,7 @@ import { createEngine } from "../../shared/engine.js";
 import { createAudio } from "../../shared/engine/audio.js";
 import { Spring } from "../../shared/spring.js";
 
-const { renderer, input, math, run, finish } = createEngine();
+const { renderer, input, math, run, finish, audio } = createEngine();
 const { ctx, canvas } = renderer;
 
 run(update);
@@ -46,6 +46,8 @@ let shakeDuration = 200; // Duration of the shake in milliseconds
 let shakeStartTime = 0;
 let shakeIntensity = 25; // Intensity of the shake
 
+let isFinished = false;
+
 // Load cursor images
 let cursor = {
   chiselImage0: loadImage("./assets/PNG/chisel_0.png"),
@@ -53,12 +55,6 @@ let cursor = {
   chiselImage2: loadImage("./assets/PNG/chisel_2.png"),
   chiselImage3: loadImage("./assets/PNG/chisel_3.png"),
   hammerImage: loadImage("./assets/PNG/hammer.png"),
-};
-
-let crackImages = {
-  crack01: loadImage("./assets/SVG/1_A_Crack_01.svg"),
-  crack02: loadImage("./assets/SVG/1_A_Crack_02.svg"),
-  crack03: loadImage("./assets/SVG/1_A_Crack_03.svg"),
 };
 
 let currentChiselImage = null;
@@ -216,13 +212,18 @@ function drawPolygonStrokes() {
 
   if (isCrackComplete) {
     console.log("Crack complete");
+    if (!isFinished) {
+      rockSound.play();
+    }
+    isFinished = true;
+
     setTimeout(() => {
       spring.target = 0;
 
       if (spring.position <= -0.05) {
         finish();
       }
-    }, 500);
+    }, 1000);
   }
 }
 
@@ -304,7 +305,7 @@ function updateHammerRotation() {
       hammerSwinging = false;
       hammerSwingComplete = true;
       isShaking = true;
-      hitSoundFile.play({
+      hitSound.play({
         rate: 0.75 + Math.random() * 1,
         volume: 0.5 + Math.random() * 0.5,
       });
@@ -332,12 +333,6 @@ function updateHammerRotation() {
 }
 
 // initialize audio
-const audio = createAudio();
 
-const hitSoundFile = await audio.load({
-  src: "./assets/SFX/hit.mp3",
-  loop: false,
-});
-const hitSound = hitSoundFile.play({
-  volume: 0,
-});
+const hitSound = await audio.load("assets/SFX/hit.mp3");
+const rockSound = await audio.load("assets/SFX/rock.mp3");

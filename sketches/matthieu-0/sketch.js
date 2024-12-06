@@ -104,6 +104,8 @@ function updateSVGLineWidth() {
   if (svgLineWidth > 20) {
     svgLineWidth -= 1;
     isLineComplete = true;
+    spring.target = 0;
+    pageLoaded = false; // Set flag to false to prevent overwriting spring.target
     if (!isVictory) {
       victorySound.play();
     }
@@ -117,8 +119,7 @@ function updateSVGLineWidth() {
   // Finish if the line is complete and width is zero
   if (isLineComplete && svgLineWidth <= 0) {
     console.log("svgLineWidth was once complete and is now smaller than 0");
-    spring.target = 0;
-    pageLoaded = false; // Set flag to false to prevent overwriting spring.target
+
     if (spring.position < 0.1) {
       finish();
     }
