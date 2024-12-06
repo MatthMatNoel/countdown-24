@@ -107,7 +107,9 @@ function updateSVGLineWidth() {
     spring.target = 0;
     pageLoaded = false; // Set flag to false to prevent overwriting spring.target
     if (!isVictory) {
-      victorySound.play();
+      victorySound.play({
+        volume: 1.5,
+      });
     }
     isVictory = true;
   } else if (svgLineWidth > 10) {
@@ -181,7 +183,7 @@ function createFirework(x, y) {
   });
   fireworkSound.play({
     rate: 1 + Math.random() * 1,
-    volume: 0.1 + Math.random() * 0.5,
+    volume: 0.05 + Math.random() * 0.1,
   });
 }
 
@@ -204,7 +206,7 @@ function updateFireworks() {
       svgLineWidth += 1;
       explosionSound.play({
         rate: 1 + Math.random() * 1,
-        volume: 0.1 + Math.random() * 2,
+        volume: 0.1 + Math.random() * 1,
       });
     }
   }
